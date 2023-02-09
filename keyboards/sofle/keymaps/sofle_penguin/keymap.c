@@ -47,13 +47,13 @@ static void render_logo(void) {
 static void print_status_narrow(void) {
     // Print current mode
     oled_write_P(PSTR("\n\n"), false);
-    oled_write_ln_P(PSTR("Penguin"), false);
+    oled_write_ln_P(PSTR("Pengu"), false);
     oled_write_ln_P(PSTR(""), false);
-    if (keymap_config.swap_lctl_lgui) {
-        oled_write_ln_P(PSTR("MAC"), false);
-    } else {
-        oled_write_ln_P(PSTR("WIN"), false);
-    }
+    // if (keymap_config.swap_lctl_lgui) {
+    //     oled_write_ln_P(PSTR("MAC"), false);
+    // } else {
+    //     oled_write_ln_P(PSTR("WIN"), false);
+    // }
 
     switch (get_highest_layer(default_layer_state)) {
         case _QWERTY:
@@ -87,6 +87,7 @@ static void print_status_narrow(void) {
     oled_write_P(PSTR("\n\n"), false);
     led_t led_usb_state = host_keyboard_led_state();
     oled_write_ln_P(PSTR("CPSLK"), led_usb_state.caps_lock);
+    oled_write_ln_P(PSTR("NUM"), led_usb_state.num_lock);
 }
 
 oled_rotation_t oled_init_user(oled_rotation_t rotation) {
@@ -113,25 +114,30 @@ layer_state_t layer_state_set_user(layer_state_t state) {
 
 
 #ifdef ENCODER_ENABLE
+uint8_t layer = 0;
 
 bool encoder_update_user(uint8_t index, bool clockwise) {
     // left
     if (index == 0) {
         if (clockwise) {
-            tap_code(KC_VOLU);
-            layer++;
-        } else {
-            tap_code(KC_VOLD);
-            if (layer == 0){
-                layer = 0
+            if (layer == _GAME) {
+                layer = _QWERTY;
+            } else {
+                layer++;
             }
-            layer--;
+        } else {
+            if (layer == _QWERTY){
+                layer = _GAME;
+            } else {
+                layer--;
+            }
         }
+        tap_code(TO(layer));
     
     // right
     } else if (index == 1) {
         if (clockwise) {
-            tap_code(KC_PGDOWN);
+            tap_code(KC_PGDN);
         } else {
             tap_code(KC_PGUP);
         }

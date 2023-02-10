@@ -3,7 +3,8 @@
 enum sofle_layers {
     _QWERTY,
     _NUMBER,
-    _GAME
+    _GAME,
+    _GAME2
 };
 
 enum custom_keycodes {
@@ -36,7 +37,14 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         KC_LSFT, KC_NO, KC_A, KC_S, KC_D, KC_F,                 KC_P4, KC_P5, KC_P6, KC_F4, KC_F5, KC_F6,
         KC_LCTL, KC_Z, KC_X, KC_C, KC_V, KC_G, KC_TRNS,         KC_NO, KC_P1, KC_P2, KC_P3, KC_F1, KC_F2, KC_F3,
         KC_TRNS, KC_TRNS, KC_TRNS, KC_SPC, KC_TRNS,             KC_TRNS, KC_NUM, KC_PPLS, KC_PMNS, KC_PEQL
-        )
+        )//,
+	// [3] = LAYOUT(
+    //     KC_ESC, KC_1, KC_2, KC_3, KC_4, KC_5,                   KC_PSLS, KC_PAST, KC_PMNS, KC_F10, KC_F11, KC_F12,
+    //     KC_TAB, KC_NO, KC_Q, KC_W, KC_E, KC_R,                  KC_P7, KC_P8, KC_P9, KC_F7, KC_F8, KC_F9,
+    //     KC_LSFT, KC_NO, KC_A, KC_S, KC_D, KC_F,                 KC_P4, KC_P5, KC_P6, KC_F4, KC_F5, KC_F6,
+    //     KC_LCTL, KC_Z, KC_X, KC_C, KC_V, KC_G, KC_TRNS,         KC_NO, KC_P1, KC_P2, KC_P3, KC_F1, KC_F2, KC_F3,
+    //     KC_TRNS, KC_TRNS, KC_TRNS, KC_SPC, KC_TRNS,             KC_TRNS, KC_NUM, KC_PPLS, KC_PMNS, KC_PEQL
+    //     )
 };
 
 #ifdef OLED_ENABLE
@@ -83,10 +91,10 @@ static void print_status_narrow(void) {
             oled_write_P(PSTR("Qwrty\n"), false);
             break;
         case _NUMBER:
-            oled_write_P(PSTR("Numb\n"), false);
+            oled_write_P(PSTR("Numb \n"), false);
             break;
         case _GAME:
-            oled_write_P(PSTR("Game\n"), false);
+            oled_write_P(PSTR("Game \n"), false);
             break;
         default:
             oled_write_ln_P(PSTR("Undef"), false);
@@ -117,9 +125,9 @@ bool oled_task_user(void) {
 
 
 
-layer_state_t layer_state_set_user(layer_state_t state) {
-    return update_tri_layer_state(state, _QWERTY, _NUMBER, _GAME);
-}
+// layer_state_t layer_state_set_user(layer_state_t state) {
+//     return update_tri_layer_state(state, _QWERTY, _NUMBER, _GAME);
+// }
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     switch (keycode) {
@@ -152,9 +160,20 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 }
 
 #ifdef ENCODER_ENABLE
+#define DEBOUNCE_DELAY 5
+
+
+uint8_t last_state = 0;
+uint32_t last_debounce_time = 0;
 uint8_t layer = 0;
 
 bool encoder_update_user(uint8_t index, bool clockwise) {
+
+    // uint8_t new_state = read_encoder();
+    uint32_t current_time = timer_read();
+    if (/*new_state != last_state || */(current_time - last_debounce_time) > DEBOUNCE_DELAY) {
+        last_debounce_time = current_time;
+        // last_state = new_state;
     // left
     if (index == 0) {
         if (clockwise) {
@@ -162,30 +181,35 @@ bool encoder_update_user(uint8_t index, bool clockwise) {
         // } else {
         //     tap_code(KC_VOLD);
         // }
-            if (layer == _GAME) {
-                // layer = _QWERTY;
-                layer = _GAME;
+            if (layer == _GAME * 3) {
+                layer = _QWERTY;
+                // layer = _GAME;
             } else {
                 layer++;
             }
         } else {
             if (layer == _QWERTY){
-                layer = _QWERTY;
-                // layer = _GAME;
+                // layer = _QWERTY;
+                layer = _GAME;
             } else {
                 layer--;
             }
         }
 
-        switch (layer) {
-            case _QWERTY:
-                tap_code16(KC_QWERTY);
-            case _NUMBER:
-                tap_code16(KC_NUMBER);
-            case _GAME:
-                tap_code16(KC_GAME);
-        }
-        tap_code(TO(layer));
+        layer = layer % 3;
+        layer_clear();
+        layer_on(layer);
+
+
+        // switch (layer) {
+        //     case _QWERTY:
+        //         tap_code16(KC_QWERTY);
+        //     case _NUMBER:
+        //         tap_code16(KC_NUMBER);
+        //     case _GAME:
+        //         tap_code16(KC_GAME);
+        // }
+        // tap_code(TO(layer));
 
     // right
     } else if (index == 1) {
@@ -196,6 +220,8 @@ bool encoder_update_user(uint8_t index, bool clockwise) {
         }
     }
     return true;
+    }
+    return false;
 }
 
 #endif
